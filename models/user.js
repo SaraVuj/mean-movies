@@ -8,7 +8,8 @@ const UserSchema = mongoose.Schema({
     },
     email: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
     password: {
         type: String,
@@ -46,5 +47,15 @@ module.exports.comparePassword = function(candidatePassword, hash, callback){
     bcrypt.compare(candidatePassword, hash, (err, isMatch) => {
         if(err) throw err;
         callback(null, isMatch);
+    });
+}
+
+module.exports.updateUser = function(id, user, callback){
+    User.updateOne({_id: id}, user, callback);
+}
+
+module.exports.generatePassword = function(password, callback){
+    bcrypt.genSalt(10, (err, salt) => {
+        bcrypt.hash(password, salt, callback);
     });
 }

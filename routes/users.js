@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
+const crypto = require('crypto');
 const config = require('../config/db');
 const User = require('../models/user');
 
@@ -36,6 +37,10 @@ router.post('/register', (req, res) => {
 router.post('/authenticate', (req, res) => {
     const email = req.body.email;
     const password = req.body.password;
+
+
+    req.session.email = email;
+    console.log(req.session.email);
 
     User.getUserByEmail(email, (err, user) => {
         if(err) throw err;
@@ -74,8 +79,12 @@ router.post('/authenticate', (req, res) => {
     
 // });
 
-router.get('/profile', passport.authenticate('jwt', {session:false}), (req, res) => {
-    res.json({user: req.user});
+router.get('/profile', passport.authenticate('jwt'), (req, res) => {
+    console.log(req.sessionID);
+    if(req.session.email) {
+        res.json({user: req.user});
+    }
+    else res.json({msg: "not logged in"});
     
 });
 
@@ -85,11 +94,24 @@ router.post('/forgotpassword', (req, res) => {
         if(err) throw err;
         if(!user) res.send("User with given email has not been registered.");
         if(user){
+            newPassword = crypto.randomBytes(5).toString('hex');
+            console.log(`New password ${newPassword}`);
+
+            User.generatePassword(newPassword, (err, hash) => {
+                if(err) throw err;
+                user.password = hash;
+                User.updateUser(user._id, user, (err, msg) => {
+                    if(err) throw err;
+                    console.log(hash);
+                })
+            });
+
+
             let mailOptions = {
                 to: user.email,
                 from: config.mailer.from,
                 subject: 'Password Reset',
-                html: "<p>Nova lozinka</p>"
+                html: "<p>" + newPassword + "</p>"
               };
               smtpTransport.sendMail(mailOptions,  (err) => {
                 if (!err) {

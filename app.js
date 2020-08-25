@@ -1,8 +1,20 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const passport = require('passport')
-const jwt = require('jsonwebtoken')
-const config = require('./config/db')
+const passport = require('passport');
+const jwt = require('jsonwebtoken');
+const session = require('express-session');
+const MongoDBStore = require('connect-mongodb-session')(session)
+
+const config = require('./config/db');
+const store = new MongoDBStore({
+    uri: config.database,
+    collection: 'sessions'
+});
+   
+  // Catch errors
+store.on('error', function(error) {
+    console.log(error);
+});
 
 mongoose.connect(config.database)
 mongoose.connection.on('connected', () => {
@@ -16,6 +28,22 @@ mongoose.connection.on('error', (err) => {
 const app = express();
 const port = 5000;
 app.use(express.json());
+
+app.use(session({ 
+  
+    // It holds the secret key for session 
+    secret: 'jflkqfuhqlfbqlifbL', 
+  
+    // Forces the session to be saved 
+    // back to the session store 
+    resave: false, 
+  
+    // Forces a session that is "uninitialized" 
+    // to be saved to the store 
+    saveUninitialized: false,
+    store: store
+}));
+
 app.use(passport.initialize());
 app.use(passport.session());
 require('./config/passport')(passport);
