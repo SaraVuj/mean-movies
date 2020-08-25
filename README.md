@@ -1,7 +1,7 @@
 # mean-movies
-Create .env file with following content:
-FACEBOOK_CLIENT_ID=your id
-FACEBOOK_CLIENT_SECRET=your api key
+Create .env file with following content:<br/>
+FACEBOOK_CLIENT_ID=your id <br/>
+FACEBOOK_CLIENT_SECRET=your api key<br/>
 FACEBOOK_CALLBACK_URL=http://localhost:5000/api/users/auth/facebook/callback
 
 
