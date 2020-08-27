@@ -4,9 +4,11 @@ const jwt = require('jsonwebtoken');
 const passport = require('passport');
 const crypto = require('crypto');
 const config = require('../config/db');
+const {body, validationResult} = require('express-validator');
 const User = require('../models/user');
 
 const nodemailer = require('nodemailer');
+const { route } = require('./movies');
 var smtpTransport = nodemailer.createTransport(config.mailer.options);
 
 router.get('/auth/facebook', passport.authenticate('facebook'));
@@ -17,7 +19,20 @@ router.get("/auth/facebook/callback", passport.authenticate("facebook", {
     })
 );
 
-router.post('/register', (req, res) => {
+router.post('/register', [
+    //validate email
+    body('email').notEmpty().isEmail(),
+    //validate password
+    body('password').notEmpty().isLength({min:4})] , (req, res) => {
+
+     //validation errors
+     var errors = validationResult(req);
+ 
+     if(!errors.isEmpty()){
+        return res.status(400).json({errors: errors});
+     }
+
+
     let newUser = new User({
         name: req.body.name,
         email: req.body.email,
@@ -37,7 +52,6 @@ router.post('/register', (req, res) => {
 router.post('/authenticate', (req, res) => {
     const email = req.body.email;
     const password = req.body.password;
-
 
     req.session.email = email;
     console.log(req.session.email);
@@ -129,6 +143,12 @@ router.post('/forgotpassword', (req, res) => {
             });
         }
     });
+});
+
+
+router.get('/logout', (req, res) => {
+    req.logout();
+    res.redirect('/');
 });
 
 module.exports = router;
